@@ -43,8 +43,15 @@ export const omnaiscopeBackendManager = (()=> { // singelton for only one possib
         port = await getFreePort(); 
 
         if(existsSync(exePath)){
-            backendProcess = spawn(exePath, ["-w", "-p", port.toString()]); 
-            console.log(`Backend process started on port ${port}`);
+            backendProcess = spawn(exePath, ["-w", "-p", port.toString()], {
+                detached: true,
+                stdio: ['ignore', 'pipe', 'pipe'], // oder 'ignore' wenn du keine Logs brauchst
+            });
+    
+            //backendProcess.stdout.on('data', () => {});
+            //backendProcess.stderr.on('data', () => {});
+
+            console.log(`✅ Backend process started on port ${port}`);
         }   
     }
 

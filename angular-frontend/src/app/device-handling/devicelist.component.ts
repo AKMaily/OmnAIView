@@ -37,4 +37,14 @@ export class DeviceListComponent {
             console.warn('Not in browser mode, cant load devices without electron context');
         }
     }
+
+    connectToWebSocket(): void {
+        if (isPlatformBrowser(this.platformId)) {
+            const nachricht = 'E4620C205B304B21'; // kannst du dynamisch setzen
+            this.backendApiService.connectWebSocket(nachricht);
+        } else {
+            console.warn('Nicht im Browser-Kontext – WebSocket-Verbindung nicht möglich.');
+        }
+    }
+    
 }

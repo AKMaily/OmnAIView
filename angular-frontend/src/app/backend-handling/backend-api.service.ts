@@ -27,4 +27,53 @@ export class BackendAPIService {
 
         return devicesObservable;
     }
+
+    connectWebSocket(message: string): void {
+        this.backendPortService.loadOmnAIScopeBackendPort().then(port => {
+            const socket = new WebSocket(`ws://127.0.0.1:${port}/ws`);
+    
+            socket.onopen = () => {
+                console.log("WebSocket-Verbindung geöffnet.");
+            };
+    
+            let initialHandshakeReceived = false;
+
+            let counter = 0;
+    
+            socket.onmessage = (event) => {
+                const rawMessage = event.data;
+                console.log("Empfangene Nachricht:", rawMessage);
+    
+                // Versuchen zu parsen – aber nur wenn es gültiges JSON ist
+                let data: any;
+                try {
+                    data = JSON.parse(rawMessage);
+                } catch (e) {
+                    console.warn("Nicht-JSON Nachricht empfangen:", rawMessage);
+                    
+                    // Sobald die Handshake-Nachricht erkannt wurde, senden wir die UUID
+                    if (!initialHandshakeReceived && rawMessage.startsWith("Hello")) {
+                        initialHandshakeReceived = true;
+                        console.log("Sende UUID nach Initialnachricht...");
+                        setTimeout(() => {
+                            socket.send("E4620C205B304B21");
+                            console.log("UUID gesendet");
+                          }, 100);
+                    }
+                    return;
+                }
+            };
+    
+            socket.onerror = (error) => {
+                console.error("WebSocket-Fehler:", error);
+            };
+    
+            socket.onclose = () => {
+                console.log("WebSocket-Verbindung geschlossen.");
+            };
+        }).catch(err => {
+            console.error("Fehler beim Laden des Ports:", err);
+        });
+    }
+    
 }
