@@ -37,7 +37,7 @@ export class DummyDataService implements DataSource {
         }
     }
     clearData():void{
-        this.disconnect(); 
+        // this.disconnect(); 
         this._data.set({}); 
     }
 }
