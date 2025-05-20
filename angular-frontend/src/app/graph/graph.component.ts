@@ -17,6 +17,11 @@ import { ResizeObserverDirective } from '../shared/resize-observer.directive';
 import { StartDataButtonComponent } from "../source-selection/start-data-from-source.component";
 import { DataSourceService } from './graph-data.service';
 import { MeasurementComponent } from '../measurement/measurement.component';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import { MatIcon } from '@angular/material/icon';
+import { SidenavComponent } from "../sidenav/sidenav.component";
+import { NavbarComponent } from '../navbar/navbar.component';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-graph',
@@ -24,7 +29,7 @@ import { MeasurementComponent } from '../measurement/measurement.component';
   templateUrl: './graph.component.html',
   providers: [DataSourceService],
   styleUrls: ['./graph.component.css'],
-  imports: [ResizeObserverDirective, JsonPipe, StartDataButtonComponent, DeviceListComponent, MeasurementComponent],
+  imports: [ResizeObserverDirective, JsonPipe, StartDataButtonComponent, NavbarComponent, DeviceListComponent, MeasurementComponent, MatSidenavModule, MatIcon, SidenavComponent, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GraphComponent {
