@@ -22,6 +22,7 @@ import { MatIcon } from '@angular/material/icon';
 import { SidenavComponent } from "../sidenav/sidenav.component";
 import { NavbarComponent } from '../navbar/navbar.component';
 import { MatButtonModule } from '@angular/material/button';
+import { DeviceListComponent2 } from '../data-servers/test-data-server/develist2.component';
 
 @Component({
   selector: 'app-graph',
@@ -29,7 +30,7 @@ import { MatButtonModule } from '@angular/material/button';
   templateUrl: './graph.component.html',
   providers: [DataSourceService],
   styleUrls: ['./graph.component.css'],
-  imports: [ResizeObserverDirective, JsonPipe, StartDataButtonComponent, NavbarComponent, DeviceListComponent, MeasurementComponent, MatSidenavModule, MatIcon, SidenavComponent, MatButtonModule],
+  imports: [ResizeObserverDirective, JsonPipe, StartDataButtonComponent, DeviceListComponent2, NavbarComponent, DeviceListComponent, MeasurementComponent, MatSidenavModule, MatIcon, SidenavComponent, MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GraphComponent {
