@@ -2,6 +2,7 @@ import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { type DataFormat, OmnAIScopeDataService } from '../data-servers/omnai-scope-server/live-data.service';
 import { Observable } from 'rxjs';
 import { DummyDataService } from '../data-servers/random-data-server/random-data.service';
+import { TestDataService } from '../data-servers/test-data-server/test-data.service';
 /** Dummy interface to match your expected shape */
 export interface DataPoint {
     x: number;
@@ -28,6 +29,7 @@ export interface DataSourceInfo  extends DataSource{
 })
 export class DataSourceSelectionService {
     private readonly liveDataService = inject(OmnAIScopeDataService);
+    private readonly testDataService = inject(TestDataService); 
     private readonly _currentSource = signal<DataSourceInfo | null>(null); private readonly dummyDataService = inject(DummyDataService);
 
     private readonly _availableSources = signal<DataSourceInfo[]>([
