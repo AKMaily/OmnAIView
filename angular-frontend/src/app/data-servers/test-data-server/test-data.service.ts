@@ -3,7 +3,7 @@ import { DataSource } from "../../source-selection/data-source-selection.service
 import { DataFormat } from "../omnai-scope-server/live-data.service";
 
 
-Injectable({
+@Injectable({
     providedIn: 'root'
 })
 export class testDataService implements DataSource {
