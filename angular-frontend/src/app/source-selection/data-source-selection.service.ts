@@ -48,6 +48,13 @@ export class DataSourceSelectionService {
             disconnect: this.dummyDataService.disconnect.bind(this.dummyDataService),
             clearData: this.dummyDataService.clearData.bind(this.dummyDataService),
             data: this.dummyDataService.data
+        }, 
+        {
+            id: 'sinrectestdata',
+            name: 'Test Data Server',
+            description: 'Generate a sinus or rectangular function as testdata for the graph',
+            connect: this.testDataService.connect.bind(this.testDataService),
+            data: this.testDataService.data
         }
     ]);
     readonly availableSources = this._availableSources.asReadonly();
