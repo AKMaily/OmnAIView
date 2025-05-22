@@ -12,8 +12,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule, MatCheckboxChange} from '@angular/material/checkbox'; 
 
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { OmnAIScopeDataService } from '../omnai-datasource/omnai-scope-server/live-data.service';
+import { OmnAIScopeDataService } from '../data-servers/omnai-scope-server/live-data.service';
 import { SettingsService } from './settings-for-source.service';
+import { TestDataService } from '../data-servers/test-data-server/test-data.service';
 
 @Component({
     selector: 'app-source-select-modal',
@@ -33,6 +34,9 @@ export class SourceSelectModalComponent {
     readonly #deviceHandler = inject(OmnAIScopeDataService); 
     devices = this.#deviceHandler.devices; 
 
+    readonly #deviceHandlerTest = inject(TestDataService); 
+    devicesTest = this.#deviceHandlerTest.devices; 
+
     private fb = inject(FormBuilder); 
     step1Form!: FormGroup; 
     step2Form!: FormGroup; 
@@ -48,7 +52,12 @@ export class SourceSelectModalComponent {
 
     private readonly dialogRef = inject(MatDialogRef<SourceSelectModalComponent>);
     onSourceSelected(source: DataSourceInfo) {
+        console.log("Source ausgewählt"); 
         this.datasourceService.selectSource(source);
+        if(source.id === 'sinrectestdata'){
+            console.log("getdevices"); 
+            this.#deviceHandlerTest.getDevices(); 
+        }
     }
 
     select(source: DataSourceInfo) {
@@ -88,7 +97,7 @@ export class SourceSelectModalComponent {
         this.settings.setSource(source.id);           
 
         // save UUID List 
-        if (source.id === 'omnaiscope') {
+        if (source.id === 'omnaiscope' || source.id === 'sinrectestdata') {
         const uuids: string[] = this.step2Form.get('selectedUUIDs')?.value ?? [];
         this.settings.setUUIDs(uuids.length ? uuids : null);
         } else {

@@ -20,29 +20,40 @@
                     }
                 </mat-select>
             </mat-form-field>
-            @if (isOmnAIScopeSelected){
                 <div> 
                     <button mat-button matStepperNext> Next</button>
                 </div>
-            }
             </form>
         </mat-step>
-        @if (isOmnAIScopeSelected) {
             <mat-step [stepControl]="step2Form">
                 <form [formGroup]="step2Form">
                     <ng-template matStepLabel>Select UUIDs</ng-template>
                     <p><strong>Select Devices</strong></p>
                         <div class="checkbox-group">
-                        @if (devices().length > 0) {
-                            @for (device of devices(); track device.UUID) {
-                            <mat-checkbox 
-                                (change)="onCheckboxChange($event, device.UUID)"
-                                [checked]="step2Form.value.selectedUUIDs.includes(device.UUID)">
-                                UUID: {{ device.UUID }}
-                            </mat-checkbox>
+                        @if (isOmnAIScopeSelected) {
+                            @if (devices().length > 0) {
+                                @for (device of devices(); track device.UUID) {
+                                <mat-checkbox 
+                                    (change)="onCheckboxChange($event, device.UUID)"
+                                    [checked]="step2Form.value.selectedUUIDs.includes(device.UUID)">
+                                    UUID: {{ device.UUID }}
+                                </mat-checkbox>
+                                }
+                            } @else {
+                                <p>No devices found</p>
                             }
                         } @else {
-                            <p>No devices found</p>
+                            @if (devicesTest().length > 0) {
+                                @for (device of devicesTest(); track device.UUID) {
+                                <mat-checkbox 
+                                    (change)="onCheckboxChange($event, device.UUID)"
+                                    [checked]="step2Form.value.selectedUUIDs.includes(device.UUID)">
+                                    UUID: {{ device.UUID }}
+                                </mat-checkbox>
+                                }
+                            } @else {
+                                <p>No devices found</p>
+                            }
                         }
                         </div>
                     <div>
@@ -50,7 +61,6 @@
                     </div>
                 </form>
             </mat-step>
-        }
     </mat-vertical-stepper> 
 </mat-dialog-content>
 

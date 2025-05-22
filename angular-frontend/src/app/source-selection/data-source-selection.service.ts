@@ -30,7 +30,8 @@ export interface DataSourceInfo  extends DataSource{
 export class DataSourceSelectionService {
     private readonly liveDataService = inject(OmnAIScopeDataService);
     private readonly testDataService = inject(TestDataService); 
-    private readonly _currentSource = signal<DataSourceInfo | null>(null); private readonly dummyDataService = inject(DummyDataService);
+    private readonly _currentSource = signal<DataSourceInfo | null>(null);
+    private readonly dummyDataService = inject(DummyDataService);
 
     private readonly _availableSources = signal<DataSourceInfo[]>([
         {
@@ -56,6 +57,8 @@ export class DataSourceSelectionService {
             name: 'Test Data Server',
             description: 'Generate a sinus or rectangular function as testdata for the graph',
             connect: this.testDataService.connect.bind(this.testDataService),
+            disconnect: this.testDataService.disconnect.bind(this.testDataService),
+            clearData: this.testDataService.clearData.bind(this.testDataService),   
             data: this.testDataService.data
         }
     ]);
@@ -81,6 +84,11 @@ export class DataSourceSelectionService {
     addSourceToAvailbleSoruces(source: DataSourceInfo) {
         this._availableSources.update((value) => [...value, source])
     }
+    /**
+     * To avoid handling of null values, this signal returns either the current source,
+     * or, if the current souce is not set, it returns an empy Record which still maintains 
+     * the format of the datasourcec
+     */
     readonly data = computed(() => {
         const source = this._currentSource();
         if (!source) return signal<Record<string, DataFormat[]>>({});

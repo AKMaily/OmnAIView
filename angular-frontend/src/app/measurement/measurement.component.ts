@@ -1,22 +1,24 @@
 import { Component } from '@angular/core';
 import { SettingsService } from '../source-selection/settings-for-source.service';
 import { DataSourceSelectionService } from '../source-selection/data-source-selection.service';
-import { OmnAIScopeDataService } from '../omnai-datasource/omnai-scope-server/live-data.service';
+import { OmnAIScopeDataService } from '../data-servers/omnai-scope-server/live-data.service';
 import { MatIconModule } from '@angular/material/icon';
 import { inject } from '@angular/core';
 import { MeasurementService } from './measurment-state.service';
 import { MatButtonModule } from '@angular/material/button';
+import { TestDataService } from '../data-servers/test-data-server/test-data.service';
 
 @Component({
   selector: 'app-measurement',
   imports: [MatIconModule, MatButtonModule],
   templateUrl: './measurement.component.html',
-  styleUrl: './measurement.component.css'
+  styleUrl: './measurement.component.css', 
+  standalone: true
 })
 export class MeasurementComponent {
    constructor(
       private settings: SettingsService,
-      private scope   : OmnAIScopeDataService   // für devices()
+      private scope   : OmnAIScopeDataService  // für devices()
     ) {}
 
     private readonly buttonsDefault = [
@@ -29,6 +31,7 @@ export class MeasurementComponent {
 
     private readonly dataSourceSelection = inject(DataSourceSelectionService); 
     private readonly measurementService = inject(MeasurementService);
+    private readonly testService = inject(TestDataService);
 
     // Getter to read properties of the buttons in html file
     get buttonList() {
@@ -62,8 +65,20 @@ export class MeasurementComponent {
           }
           configOfUUIDS = { UUIDS: valid };        
         }
+        else if (source_id === 'sinrectestdata') {  
+          const available = this.testService.devices().map(d => d.UUID);
+          const wished = this.settings.selectedUUIDs() ?? available;
+          const valid = wished.filter(u => available.includes(u));
+
+          if (!valid.length) {
+            alert('None of the chosen test devices is available');
+            return;
+          }
+          configOfUUIDS = { UUIDS: valid };
+        }
         this.dataSourceSelection.currentSource()?.connect(configOfUUIDS); // connects the sources for data 
       }
+
       else {
         this.stopMeasurement(); 
       }       

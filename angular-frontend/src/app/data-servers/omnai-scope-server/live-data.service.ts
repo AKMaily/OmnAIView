@@ -11,6 +11,7 @@ import { of } from 'rxjs';
 import { MeasurementService } from '../../measurement/measurment-state.service';
 import { withLatestFrom } from 'rxjs/operators';
 import { filter } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 interface DeviceInformation {
   UUID: string;
@@ -94,7 +95,11 @@ export class OmnAIScopeDataService implements DataSource{
     });
   }
 
+  private readonly dialog = inject(MatDialog)
   connect(config?: {UUIDS: string[]}): void {
+    // config hanlding with UI
+   // this.dialog.open(LiveDataConfigComponent).afterClosed().subscribe((result) => openWSWithREsuclt)
+    //acutal start of stuf
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       console.log('WebSocket ist bereits verbunden.');
       return;

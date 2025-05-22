@@ -42,7 +42,7 @@ export class TestDataService implements DataSource {
             }
         });
     }
-    connect():void{
+    connect(config?: {UUIDS: string[]}):void{
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         console.log('Websocket already connected.');
           return;
@@ -53,8 +53,15 @@ export class TestDataService implements DataSource {
         this.socket.addEventListener('open', () => {
             this.data.set({}); 
 
-            const deviceUuids = this.devices().map(device => device.UUID).join(" ");
-            this.socket?.send(deviceUuids);
+            if(config){
+                console.log("config existiert"); 
+            const deviceConfig = config.UUIDS.join("");
+            this.socket?.send(deviceConfig) 
+            }
+            else {
+                const deviceUuids = this.devices().map(device => device.UUID).join(" "); 
+                this.socket?.send(deviceUuids);
+            }
         }); 
 
         this.socket.addEventListener('message', (event) => {
@@ -90,5 +97,14 @@ export class TestDataService implements DataSource {
         this.socket.addEventListener('error', (error) => {
             console.error('WebSocket Fehler:', error);
         });
+    }
+     disconnect(): void {
+        if (this.socket) {
+        this.socket.close();
+        this.socket = null;
+        }
+    }
+    clearData(): void {
+        this.data.set({});
     }
 }
