@@ -1,6 +1,6 @@
 # OmnAIView
 
-Welcome to OmnAIView ! Let's get started !
+Welcome to OmnAIView! Let's get started !
 
 ## What is this?
 
