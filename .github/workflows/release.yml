@@ -1,3 +1,4 @@
+
 # ==========================================================
 #  Release-Workflow
 #  • Läuft nur nach erfolgreichem Build-Workflow auf master
@@ -54,17 +55,14 @@ jobs:
             });
 
             if (!prs.data.length) {
+
               core.setFailed('Kein PR zu diesem Commit gefunden.');
               return;
             }
 
+         
             const labels = prs.data[0].labels.map(l => l.name);
-
-            if (labels.includes('release:skip')) {
-              core.exportVariable('SKIP_RELEASE', 'true');
-              return;
-            }
-
+         
             const bump = ['major','minor','patch']
               .find(t => labels.includes(`semver:${t}`)) || 'patch';
             core.setOutput('bump', bump);
@@ -73,17 +71,18 @@ jobs:
               .find(p => labels.includes(`prerelease:${p}`)) || '';
             core.setOutput('pre', pre);
 
+
       - name: Stop if release:skip
         if: env.SKIP_RELEASE == 'true'
         run: echo "Skip release" && exit 0
 
-      # 3) Version erhöhen & Tag pushen --------------------------------------
       - name: Bump version
         id: bump
         shell: bash
         run: |
           set -euo pipefail
           git fetch --prune --tags
+
           latest=$(git tag -l "v*" --sort=-v:refname | head -n1 || echo "v0.0.0")
           echo "Latest: $latest"
 
