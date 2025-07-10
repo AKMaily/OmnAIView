@@ -2,11 +2,12 @@ name: Release
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master        # ggf. auf "main" anpassen
 
 permissions:
-  contents: write 
-  pull-requests: read
+  contents: write     # Tags + Release anlegen
+  pull-requests: read # PR-Labels auswerten
 
 env:
   NODE_VERSION: 20
@@ -34,37 +35,56 @@ jobs:
               repo:  context.repo.repo,
               commit_sha: context.sha
             });
+
             if (!pr.data.length) {
               core.setFailed('Kein PR zu diesem Commit gefunden.');
               return;
             }
+
             const labels = pr.data[0].labels.map(l => l.name);
-            const releaseSkip = labels.includes('release:skip');
-            if (releaseSkip) { core.exportVariable('SKIP_RELEASE', 'true'); return; }
 
-            const types = ['major','minor','patch'];
-            const type = types.find(t => labels.includes(`semver:${t}`)) || 'patch';
-            core.setOutput('bump', type);
+            if (labels.includes('release:skip')) {
+              core.exportVariable('SKIP_RELEASE', 'true');
+              return;
+            }
 
-            const pre = ['alpha','beta'].find(p => labels.includes(`prerelease:${p}`));
-            if (pre) core.setOutput('prerelease', pre);
+            const bump = ['major', 'minor', 'patch']
+              .find(t => labels.includes(`semver:${t}`)) || 'patch';
+            core.setOutput('bump', bump);
+
+            const prerelease = ['alpha', 'beta']
+              .find(p => labels.includes(`prerelease:${p}`)) || '';
+            core.setOutput('prerelease', prerelease);
+
 
       - name: Stop if release:skip
         if: env.SKIP_RELEASE == 'true'
         run: echo "Skip release" && exit 0
 
+      # --------------------------------------------------
+      # 3) Version hochzählen & ausgeben
+      # --------------------------------------------------
       - name: Bump version
         id: bump
+        shell: bash
         run: |
-          git fetch --tags
-          latest=$(git tag --list "v*" --sort=-v:refname | head -n 1 || echo "v0.0.0")
-          echo "Current version: $latest"
-          npx semver -c "$latest"                             \
-            --increment ${{ steps.release_type.outputs.bump }} \
-            ${{ steps.release_type.outputs.prerelease && `--preid ${steps.release_type.outputs.prerelease}` || '' }} \
-          | tee new_version
-          echo "new_version=$(cat new_version)" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          git fetch --prune --tags
+          latest=$(git tag -l "v*" --sort=-v:refname | head -n 1 || echo "v0.0.0")
+          echo "Aktuelle Version: $latest"
 
+          preflag=""
+          if [[ -n "${{ steps.release_type.outputs.prerelease }}" ]]; then
+            preflag="--preid ${{ steps.release_type.outputs.prerelease }}"
+          fi
+
+          new=$(npx semver -c "$latest" --increment ${{ steps.release_type.outputs.bump }} $preflag)
+          echo "Neue Version: $new"
+          echo "new_version=$new" >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------
+      # 4) Git-Tag erstellen & pushen
+      # --------------------------------------------------
       - name: Create tag
         run: |
           git tag ${{ steps.bump.outputs.new_version }}
@@ -80,10 +100,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload installers from previous job
+      # --------------------------------------------------
+      # 6) Artefakte aus Build-Workflow anhängen
+      # --------------------------------------------------
+      - name: Download Windows installer artifact
         uses: actions/download-artifact@v4
         with:
           name: OmnaiView-Windows-${{ github.sha }}
+
       - name: Attach assets to Release
         uses: softprops/action-gh-release@v2
         with:
@@ -91,4 +115,3 @@ jobs:
           files: |
             electron/out/make/squirrel.windows/x64/*.exe
             electron/out/make/squirrel.windows/x64/*.nupkg
-
