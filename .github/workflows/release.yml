@@ -1,117 +1,119 @@
+
+# ==========================================================
+#  Release-Workflow
+#  • Läuft nur nach erfolgreichem Build-Workflow auf master
+#  • Holt Artefakte, bump’t Version & erstellt Release
+# ==========================================================
+
 name: Release
 
 on:
-  push:
-    branches:
-      - master        # ggf. auf "main" anpassen
+  workflow_run:
+    workflows: ["Build-Windows-Binary"]   # exakt der name: deines Build-Workflows
+    types: [completed]
 
 permissions:
-  contents: write     # Tags + Release anlegen
-  pull-requests: read # PR-Labels auswerten
+  contents: write
+  pull-requests: read
 
 env:
   NODE_VERSION: 20
+  BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
   release:
+    # -- Startbedingungen ----------------------------------------------------
+    if: >
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event       == 'push'   &&   # nur Build-Runs, die durch "push" kamen
+        github.event.workflow_run.head_branch == 'master'      # und zwar auf master (Merge-Commit)
+      }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      # 1) Code des gemergten Commits auschecken ------------------------------
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BUILD_SHA }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      # 2) PR-Labels lesen ----------------------------------------------------
       - name: Determine release type from PR labels
-        id: release_type
+        id: rel
         uses: actions/github-script@v7
         with:
           script: |
-            const pr = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo:  context.repo.repo,
-              commit_sha: context.sha
+            const { owner, repo } = context.repo;
+            const commitSha = process.env.BUILD_SHA;
+
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner, repo, commit_sha: commitSha
             });
 
-            if (!pr.data.length) {
+            if (!prs.data.length) {
+
               core.setFailed('Kein PR zu diesem Commit gefunden.');
               return;
             }
 
-            const labels = pr.data[0].labels.map(l => l.name);
-
-            if (labels.includes('release:skip')) {
-              core.exportVariable('SKIP_RELEASE', 'true');
-              return;
-            }
-
-            const bump = ['major', 'minor', 'patch']
+         
+            const labels = prs.data[0].labels.map(l => l.name);
+         
+            const bump = ['major','minor','patch']
               .find(t => labels.includes(`semver:${t}`)) || 'patch';
             core.setOutput('bump', bump);
 
-            const prerelease = ['alpha', 'beta']
+            const pre = ['alpha','beta']
               .find(p => labels.includes(`prerelease:${p}`)) || '';
-            core.setOutput('prerelease', prerelease);
+            core.setOutput('pre', pre);
 
 
       - name: Stop if release:skip
         if: env.SKIP_RELEASE == 'true'
         run: echo "Skip release" && exit 0
 
-      # --------------------------------------------------
-      # 3) Version hochzählen & ausgeben
-      # --------------------------------------------------
       - name: Bump version
         id: bump
         shell: bash
         run: |
           set -euo pipefail
           git fetch --prune --tags
-          latest=$(git tag -l "v*" --sort=-v:refname | head -n 1 || echo "v0.0.0")
-          echo "Aktuelle Version: $latest"
+
+          latest=$(git tag -l "v*" --sort=-v:refname | head -n1 || echo "v0.0.0")
+          echo "Latest: $latest"
 
           preflag=""
-          if [[ -n "${{ steps.release_type.outputs.prerelease }}" ]]; then
-            preflag="--preid ${{ steps.release_type.outputs.prerelease }}"
+          if [[ -n "${{ steps.rel.outputs.pre }}" ]]; then
+            preflag="--preid ${{ steps.rel.outputs.pre }}"
           fi
 
-          new=$(npx semver -c "$latest" --increment ${{ steps.release_type.outputs.bump }} $preflag)
-          echo "Neue Version: $new"
+          new=$(npx semver -c "$latest" --increment ${{ steps.rel.outputs.bump }} $preflag)
           echo "new_version=$new" >> "$GITHUB_OUTPUT"
 
-      # --------------------------------------------------
-      # 4) Git-Tag erstellen & pushen
-      # --------------------------------------------------
-      - name: Create tag
+      - name: Create git tag
         run: |
-          git tag ${{ steps.bump.outputs.new_version }}
+          git tag ${{ steps.bump.outputs.new_version }} ${{ env.BUILD_SHA }}
           git push origin ${{ steps.bump.outputs.new_version }}
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      # 4) Artefakte des Build-Runs herunterladen ----------------------------
+      - uses: actions/download-artifact@v4
         with:
-          tag_name: ${{ steps.bump.outputs.new_version }}
-          name:     ${{ steps.bump.outputs.new_version }}
-          prerelease: ${{ steps.release_type.outputs.prerelease != '' }}
+          run_id: ${{ github.event.workflow_run.id }}
+          name: OmnaiView-Windows-${{ env.BUILD_SHA }}
+
+      # 5) Release erstellen & Installer anhängen ----------------------------
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name:               ${{ steps.bump.outputs.new_version }}
+          name:                   ${{ steps.bump.outputs.new_version }}
+          prerelease:             ${{ steps.rel.outputs.pre != '' }}
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # --------------------------------------------------
-      # 6) Artefakte aus Build-Workflow anhängen
-      # --------------------------------------------------
-      - name: Download Windows installer artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: OmnaiView-Windows-${{ github.sha }}
-
-      - name: Attach assets to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.bump.outputs.new_version }}
           files: |
             electron/out/make/squirrel.windows/x64/*.exe
             electron/out/make/squirrel.windows/x64/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
