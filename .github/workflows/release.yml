@@ -87,8 +87,19 @@ jobs:
 
           bump="${{ steps.rel.outputs.bump }}"
           pre="${{ steps.rel.outputs.pre }}"
-          preflag=""
-          [[ -n "$pre" ]] && preflag="--preid $pre"
+          if [[ -n "$pre" ]]; then
+            case "$bump" in
+              patch)  bump="prepatch"  ;;
+              minor)  bump="preminor"  ;;
+              major)  bump="premajor"  ;;
+            esac
+          fi
+
+          if [[ -n "$pre" ]]; then
+            next=$(npx semver "$latest" -i "$bump" --preid "$pre")
+          else
+            next=$(npx semver "$latest" -i "$bump")
+          fi
 
              next=$(npx semver "$latest" -i "${{ steps.rel.outputs.bump }}" \
                  $( [[ -n "${{ steps.rel.outputs.pre }}" ]] && echo --preid ${{ steps.rel.outputs.pre }}))
