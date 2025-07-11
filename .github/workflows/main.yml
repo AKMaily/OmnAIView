@@ -173,7 +173,7 @@ jobs:
       - name: Artefakt-Inhalt anzeigen
         run: |
           echo "::group::Artefakt-Inhalt"
-          find electron/out/make/squirrel.windows/x64 -type f | sort
+          find . -type f | sort
           echo "::endgroup::"              
     
       - name: Create GitHub Release
