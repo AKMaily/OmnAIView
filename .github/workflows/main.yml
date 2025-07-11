@@ -184,7 +184,7 @@ jobs:
           tag_name:   ${{ needs.bump.outputs.tag }}
           prerelease: ${{ needs.bump.outputs.pre != '' }}
           files: |                  
-            electron/out/make/squirrel.windows/x64/*.exe
-            electron/out/make/squirrel.windows/x64/*.nupkg
-            electron/out/make/squirrel.windows/x64/RELEASES
+            ./*.exe
+            ./*.nupkg
+            ./RELEASES
           fail_on_unmatched_files: true
