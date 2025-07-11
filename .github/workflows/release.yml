@@ -101,6 +101,7 @@ jobs:
             next=$(npx semver "$latest" -i "$bump")
           fi                 
 
+
           echo "new_tag=$new_tag"   >> "$GITHUB_OUTPUT"
           echo "plain_ver=$next"    >> "$GITHUB_OUTPUT"
 
