@@ -169,15 +169,18 @@ jobs:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: OmnAIView-Windows      # ladet nach ./OmnAIView-Windows/…
-          path: .
-      
+          name: OmnAIView-Windows   # entpackt direkt ins Arbeitsverzeichnis
+          path: .                  # (oder ein anderer Zielordner)
+        
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name:   ${{ needs.bump.outputs.tag }}
           prerelease: ${{ needs.bump.outputs.pre != '' }}
-          files: OmnAIView-Windows
-          fail_on_unmatched_files: true    # optional – bricht sofort bei Tippfehlern ab
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |                     # ↩︎ kein Präfix mehr!
+            electron/out/make/squirrel.windows/x64/*.exe
+            electron/out/make/squirrel.windows/x64/*.nupkg
+            electron/out/make/squirrel.windows/x64/RELEASES
+          fail_on_unmatched_files: true
