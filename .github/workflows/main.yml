@@ -159,8 +159,7 @@ jobs:
   
   release:
     needs: [bump, build-windows]
-    runs-on: windows-latest
-
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -171,11 +170,11 @@ jobs:
         with:
           name: OmnAIView-Windows   
           path: . 
-      - name: Zeige alle Dateien (rekursiv)
+      - name: Artefakt-Inhalt anzeigen
         run: |
           echo "::group::Artefakt-Inhalt"
-          find . -type f | sort
-          echo "::endgroup::"               
+          find electron/out/make/squirrel.windows/x64 -type f | sort
+          echo "::endgroup::"              
     
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
