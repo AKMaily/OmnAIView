@@ -177,10 +177,7 @@ jobs:
         with:
           tag_name:   ${{ needs.bump.outputs.tag }}
           prerelease: ${{ needs.bump.outputs.pre != '' }}
-          files: |                         # <-- jetzt echte Dateipfade / Globs
-            OmnAIView-Windows/electron/out/make/squirrel.windows/x64/*.exe
-            OmnAIView-Windows/electron/out/make/squirrel.windows/x64/*.nupkg
-            OmnAIView-Windows/electron/out/make/squirrel.windows/x64/RELEASES
+          files: OmnAIView-Windows
           fail_on_unmatched_files: true    # optional – bricht sofort bei Tippfehlern ab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
