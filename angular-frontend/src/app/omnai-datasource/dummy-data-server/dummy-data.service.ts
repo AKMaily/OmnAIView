@@ -1,17 +1,22 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { interval, Subscription  } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataSource } from '../../source-selection/data-source-selection.service';
 import { DataFormat } from '../omnai-scope-server/live-data.service';
+import { MetaDataService } from '../../meta-data.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SaveDataLocallyModalComponent } from '../../save-data-locally-modal/save-data-locally-modal.component';
 
 
 @Injectable({ providedIn: 'root' })
 export class DummyDataService implements DataSource {
+    private MetaDataService = inject(MetaDataService);
     private readonly _data = signal<Record<string, DataFormat[]>>({});
+    private readonly dialog = inject(MatDialog);
 
     readonly data = this._data.asReadonly(); 
     private subscription: Subscription | null = null;
-    readonly isConnected = signal<boolean>(false); 
+    readonly isConnected = signal<boolean>(false);
 
     connect(): void {
         if (this.subscription) return;
@@ -42,9 +47,23 @@ export class DummyDataService implements DataSource {
     }
     
     save(): void {
-        console.log('Saving dummy data ...');
+        if (!this.isConnected) {
+            console.log('Dummy data source not connected.');
+            return;
+        } else {
+            this.disconnect();
+        }
+        this.dialog.open(SaveDataLocallyModalComponent, { width: '60vw' });
+        const saveMessage = JSON.stringify({
+            type: 'save',
+            data: this._data,
+            path: this.MetaDataService.getFileName()
+        });
+
+        console.log(`Saving dummy data at ${this.MetaDataService.getFileName()}`);
     }
+    
     record(): void {
-        console.log('Start recording dummy data ...');
+        console.log(`Start recording dummy data ...`);
     }
 }
