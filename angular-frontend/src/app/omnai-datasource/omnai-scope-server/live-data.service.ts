@@ -6,6 +6,7 @@ import { catchError, Observable, of, Subject, switchMap, takeUntil, timer } from
 import { map, filter } from 'rxjs/operators';
 import { BackendPortService } from './backend-port.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MetaDataService } from '../../meta-data.service';
 
 interface DeviceInformation {
   UUID: string;
@@ -37,6 +38,7 @@ export class OmnAIScopeDataService implements DataSource {
     this.setupDevicePolling();
   }
   private socket: WebSocket | null = null;
+  private MetaDataService = inject(MetaDataService);
 
   readonly isConnected = signal<boolean>(false);
   readonly devices = signal<DeviceInformation[]>([]);
@@ -175,24 +177,43 @@ export class OmnAIScopeDataService implements DataSource {
     if (this.socket?.readyState === WebSocket.OPEN) this.socket.close();
   }
 
+  // stop function
+
+  stop(): void {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      // @TODO: right stop message
+      const stopMessage = JSON.stringify({
+        type: `stop`,
+        uuids: this.devices().map(device => device.UUID),
+      });
+      console.log(stopMessage);
+      this.socket.send(stopMessage);
+    } else {
+      console.log('Websocket is not connected.');
+    }
+  }
+
   clearData(): void {
     this.data.set({});
   }
 
   save(): void {
-    try {
-      const wsUrl = `ws://${this.serverUrl()}/ws`;
-      this.socket = new WebSocket(wsUrl);
-    } catch {
-      console.log('No websocket connected.')
+    if (this.socket?.readyState !== WebSocket.OPEN || !this.data.length) {
+      console.log(this.socket?.readyState !== WebSocket.OPEN ? 'No websocket connected.' : 'No data obtained.');
       return;
     }
-
+    const saveMessage = JSON.stringify({
+      type: 'save',
+      uuids: this.devices().map(device => device.UUID),
+      path: this.MetaDataService.getFileName()
+    });
+    this.socket.send(saveMessage);
   }
 
   record(): void {
     console.log('Start recording OmnAI data ...');
   }
+
   // Typprüfung für OmnAI-Daten-Nachrichten
   private isOmnAIDataMessage(message: any): boolean {
     if (typeof message !== 'object' || message === null) return false;

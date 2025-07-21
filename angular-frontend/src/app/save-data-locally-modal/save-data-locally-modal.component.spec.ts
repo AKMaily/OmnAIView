@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SaveDataModalComponent } from './save-data-modal.component';
+import { SaveDataModalComponent } from './save-data-locally-modal.component';
 
 describe('SaveDataModalComponent', () => {
   let component: SaveDataModalComponent;
