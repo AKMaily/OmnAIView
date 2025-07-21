@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SaveDataModalComponent } from './save-data-locally-modal.component';
+import { SaveDataLocallyModalComponent } from './save-data-locally-modal.component';
 
-describe('SaveDataModalComponent', () => {
-  let component: SaveDataModalComponent;
-  let fixture: ComponentFixture<SaveDataModalComponent>;
+describe('SaveDataLocallyModalComponent', () => {
+  let component: SaveDataLocallyModalComponent;
+  let fixture: ComponentFixture<SaveDataLocallyModalComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SaveDataModalComponent]
+      imports: [SaveDataLocallyModalComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
-    fixture = TestBed.createComponent(SaveDataModalComponent);
+    fixture = TestBed.createComponent(SaveDataLocallyModalComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
