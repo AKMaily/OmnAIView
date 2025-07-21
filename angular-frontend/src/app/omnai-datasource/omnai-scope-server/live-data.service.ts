@@ -8,6 +8,8 @@ import { BackendPortService } from './backend-port.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MetaDataService } from '../../meta-data.service';
 import { take } from 'rxjs/operators';
+import { SaveDataLocallyModalComponent } from '../../save-data-locally-modal/save-data-locally-modal.component';
+import { MatDialog } from '@angular/material/dialog';
 
 interface DeviceInformation {
   UUID: string;
@@ -49,12 +51,14 @@ type WSMessage = DataMessage | FileReadyMessage;
 export class OmnAIScopeDataService implements DataSource {
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
 
   constructor() {
     this.setupDevicePolling();
   }
   private socket: WebSocket | null = null;
   private MetaDataService = inject(MetaDataService);
+
 
   readonly isConnected = signal<boolean>(false);
   readonly devices = signal<DeviceInformation[]>([]);
@@ -228,6 +232,13 @@ export class OmnAIScopeDataService implements DataSource {
   }
 
   save(): void {
+
+    const dialogRef = this.dialog.open(SaveDataLocallyModalComponent, {
+      width: '60vw'
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      console.log("dialog closed");
+    });
     let serverpath = '/download/data.txt';
     const saveMessage = {
       type: `save`,
