@@ -232,31 +232,30 @@ export class OmnAIScopeDataService implements DataSource {
   }
 
   save(): void {
-
     const dialogRef = this.dialog.open(SaveDataLocallyModalComponent, {
       width: '60vw'
     });
-    dialogRef.afterClosed().subscribe(() => {
+    dialogRef.afterClosed().pipe(filter(Boolean)).subscribe(({ dir, fileName }) => {
+      let serverpath = `/download/${fileName}`;
+      const saveMessage = {
+        type: `save`,
+        uuids: this.devices().map(device => device.UUID),
+        path: `${fileName}`
+      }
+      this.fileReady$
+        .pipe(
+          filter(m => m.url === serverpath),
+          take(1)
+        )
+        .subscribe(() => {
+          window.electronAPI?.downloadFile(serverpath, dir, fileName)
+            .catch(err => console.error('Download‑Error', err));
+        });
+      this.socket?.send(JSON.stringify(saveMessage));
       console.log("dialog closed");
     });
-    let serverpath = '/download/data.txt';
-    const saveMessage = {
-      type: `save`,
-      uuids: this.devices().map(device => device.UUID),
-      path: 'data.txt'
-    }
-    this.fileReady$
-      .pipe(
-        filter(m => m.url === serverpath),
-        take(1)
-      )
-      .subscribe(() => {
-        window.electronAPI?.downloadFile(serverpath)
-          .catch(err => console.error('Download‑Error', err));
-      });
-    this.socket?.send(JSON.stringify(saveMessage));
-
   }
+
   record(): void {
     console.log('Start recording OmnAI data ...');
   }
