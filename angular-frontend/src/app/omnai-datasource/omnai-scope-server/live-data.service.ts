@@ -7,6 +7,7 @@ import { map, filter } from 'rxjs/operators';
 import { BackendPortService } from './backend-port.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MetaDataService } from '../../meta-data.service';
+import { take } from 'rxjs/operators';
 
 interface DeviceInformation {
   UUID: string;
@@ -26,6 +27,21 @@ interface DeviceOverview {
     color: { r: number; g: number; b: number };
   }[];
 }
+
+// WSMessageInterfaces 
+
+interface DataMessage {
+  type: 'data';
+  devices: string[];
+  data: { timestamp: number, value: number[] }[];
+}
+
+interface FileReadyMessage {
+  type: 'file-ready',
+  url: string
+}
+
+type WSMessage = DataMessage | FileReadyMessage;
 
 @Injectable({
   providedIn: 'root'
@@ -55,6 +71,7 @@ export class OmnAIScopeDataService implements DataSource {
   });
 
   readonly #httpClient = inject(HttpClient);
+  private readonly fileReady$ = new Subject<FileReadyMessage>();
 
   private setupDevicePolling(): void {
     const pollInterval_ms = 15 * 1000;
@@ -130,34 +147,40 @@ export class OmnAIScopeDataService implements DataSource {
 
     let ignoreCounter = 0;
     this.socket.addEventListener('message', (event) => {
-      if (ignoreCounter < 2) {
-        // ignore first messages sometimes 
-        ignoreCounter++;
-        return;
-      }
+      const raw = (event.data as string).trim();
 
-      let parsedMessage: any;
+      if (!raw.startsWith('{')) return;
+
+      let parsedMessage: WSMessage;
       try {
         parsedMessage = JSON.parse(event.data);
       } catch {
-        parsedMessage = event.data;
+        console.warn("Wrong JSON format", event.data);
+        return;
       }
 
-      if (this.isOmnAIDataMessage(parsedMessage)) {
-        this.data.update(records => {
-          parsedMessage.devices.forEach((uuid: string, index: number) => {
-            const existingData = records[uuid] ?? [];
-            const newDataPoints = parsedMessage.data.map((point: any) => ({
-              timestamp: point.timestamp,
-              value: point.value[index],
-            }));
-            records[uuid] = existingData.concat(newDataPoints);
-          });
+      switch (parsedMessage.type) {
+        case 'data':
+          this.data.update(records => {
+            parsedMessage.devices.forEach((uuid: string, index: number) => {
+              const existingData = records[uuid] ?? [];
+              const newDataPoints = parsedMessage.data.map((point: any) => ({
+                timestamp: point.timestamp,
+                value: point.value[index],
+              }));
+              records[uuid] = existingData.concat(newDataPoints);
+            });
 
-          return { ...records };
-        });
-      } else {
-        console.warn('Unbekanntes Nachrichtenformat:', parsedMessage);
+            return { ...records };
+          });
+          break;
+        case 'file-ready':
+          console.log("File was ready");
+          this.fileReady$.next(parsedMessage);
+          break;
+        default:
+          console.warn("Not known message format");
+          console.log(parsedMessage);
       }
     });
 
@@ -178,6 +201,7 @@ export class OmnAIScopeDataService implements DataSource {
       let stopMessage = {
         type: 'stop'
       }
+      console.log(JSON.stringify(stopMessage));
       this.socket.send(JSON.stringify(stopMessage));
     }
   }
@@ -208,46 +232,25 @@ export class OmnAIScopeDataService implements DataSource {
   }
 
   save(): void {
-    if (this.socket?.readyState !== WebSocket.OPEN || !this.data.length) {
-      console.log(this.socket?.readyState !== WebSocket.OPEN ? 'No websocket connected.' : 'No data obtained.');
-      return;
-    }
-    const saveMessage = JSON.stringify({
-      type: 'save',
+    let serverpath = '/download/data.txt';
+    const saveMessage = {
+      type: `save`,
       uuids: this.devices().map(device => device.UUID),
-      path: this.MetaDataService.getFileName()
-    });
-    this.socket.send(saveMessage);
-  }
+      path: 'data.txt'
+    }
+    this.fileReady$
+      .pipe(
+        filter(m => m.url === serverpath),
+        take(1)
+      )
+      .subscribe(() => {
+        window.electronAPI?.downloadFile(serverpath)
+          .catch(err => console.error('Download‑Error', err));
+      });
+    this.socket?.send(JSON.stringify(saveMessage));
 
+  }
   record(): void {
     console.log('Start recording OmnAI data ...');
-  }
-
-  // Typprüfung für OmnAI-Daten-Nachrichten
-  private isOmnAIDataMessage(message: any): boolean {
-    if (typeof message !== 'object' || message === null) return false;
-
-    if (!('devices' in message) || !('data' in message)) return false;
-    if (
-      !Array.isArray(message.devices) ||
-      !message.devices.every((d: unknown) => typeof d === 'string')
-    ) {
-      return false;
-    }
-
-    if (
-      !Array.isArray(message.data) ||
-      !message.data.every(
-        (entry: any) =>
-          typeof entry.timestamp === 'number' &&
-          Array.isArray(entry.value) &&
-          entry.value.every((v: unknown) => typeof v === 'number'),
-      )
-    ) {
-      return false;
-    }
-
-    return true;
   }
 }

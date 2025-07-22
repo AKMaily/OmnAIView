@@ -1,9 +1,7 @@
 import { Component, inject } from "@angular/core";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatIconModule } from "@angular/material/icon";
-import { SaveDataLocallyModalComponent } from "../save-data-locally-modal/save-data-locally-modal.component";
 import { DataSourceSelectionService } from "./data-source-selection.service";
-
 
 @Component({
     selector: 'app-save-data-button',
@@ -22,5 +20,5 @@ export class SaveDataButtonComponent {
     saveData(): void {
         if (!this.datasource.currentSource()) console.log("No datasource connected.");
         this.datasource.currentSource()?.save();
-    }   
+    }
 }
