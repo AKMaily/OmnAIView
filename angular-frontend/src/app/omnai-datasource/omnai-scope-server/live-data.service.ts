@@ -171,9 +171,10 @@ export class OmnAIScopeDataService implements DataSource {
   // WebSocket-Verbindung schließen
   disconnect(): void {
     if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-      this.isConnected.set(false);
+      let stopMessage = {
+        type: 'stop'
+      }
+      this.socket.send(JSON.stringify(stopMessage));
     }
   }
 
@@ -194,7 +195,12 @@ export class OmnAIScopeDataService implements DataSource {
   }
 
   clearData(): void {
-    this.data.set({});
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+      this.isConnected.set(false);
+      this.data.set({});
+    }
   }
 
   save(): void {
