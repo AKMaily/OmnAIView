@@ -1,14 +1,16 @@
-import { Component, Inject, inject, NgModule} from '@angular/core';
+import { Component, Inject, inject, NgModule, NgZone } from '@angular/core';
 import { MetaDataService } from '../meta-data.service';
 import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
-import { 
-  MatDialogContent, 
+import {
+  MatDialogContent,
   MatDialogTitle,
-  MatDialogModule, 
+  MatDialogModule,
   MAT_DIALOG_DATA,
-  MatDialogRef} from '@angular/material/dialog';
+  MatDialogRef
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-save-data-locally-modal',
@@ -40,12 +42,16 @@ export class SaveDataLocallyModalComponent {
   private dialogRef = inject(MatDialogRef);
   // private MetaDataService = inject(MetaDataService);
 
-  constructor() {
-    console.log('Here we are');
-  }
+  constructor(private cdr: ChangeDetectorRef) { }
 
-  onSubmit(): void {
-
+  onFolderPicked(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const f = input.files?.[0]; // first file in selected folder 
+    if (!f) return;
+    if (window.electronAPI) {
+      const fullPath = window.electronAPI.getAbsolutePath(f);
+      this.filePath = fullPath.split(/[\\/]/).slice(0, -1).join('/');
+    }
   }
 
   onCancel(): void {
