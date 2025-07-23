@@ -3,14 +3,12 @@ import { interval, Subscription  } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataSource } from '../../source-selection/data-source-selection.service';
 import { DataFormat } from '../omnai-scope-server/live-data.service';
-import { MetaDataService } from '../../meta-data.service';
 import { MatDialog } from '@angular/material/dialog';
 import { SaveDataLocallyModalComponent } from '../../save-data-locally-modal/save-data-locally-modal.component';
 
 
 @Injectable({ providedIn: 'root' })
 export class DummyDataService implements DataSource {
-    private MetaDataService = inject(MetaDataService);
     private readonly _data = signal<Record<string, DataFormat[]>>({});
     private readonly dialog = inject(MatDialog);
 
@@ -53,14 +51,11 @@ export class DummyDataService implements DataSource {
         } else {
             this.disconnect();
         }
-        this.dialog.open(SaveDataLocallyModalComponent, { width: '60vw' });
-        const saveMessage = JSON.stringify({
-            type: 'save',
-            data: this._data,
-            path: this.MetaDataService.getFileName()
-        });
-
-        console.log(`Saving dummy data at ${this.MetaDataService.getFileName()}`);
+        const dialogRef = this.dialog.open(SaveDataLocallyModalComponent, { width: '60vw' });
+        dialogRef.afterClosed().subscribe(({dir, fileName}) => {
+            const dummyData = JSON.stringify(this._data());
+            if(window.electronAPI) window.electronAPI.saveFile(dummyData, dir, fileName);
+        })
     }
     
     record(): void {
