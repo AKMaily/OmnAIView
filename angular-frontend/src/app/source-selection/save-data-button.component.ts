@@ -1,5 +1,5 @@
 import { Component, inject } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
+import { MatDialogModule } from "@angular/material/dialog";
 import { MatIconModule } from "@angular/material/icon";
 import { DataSourceSelectionService } from "./data-source-selection.service";
 

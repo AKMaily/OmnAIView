@@ -6,7 +6,6 @@ import { catchError, Observable, of, Subject, switchMap, takeUntil, timer } from
 import { map, filter } from 'rxjs/operators';
 import { BackendPortService } from './backend-port.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MetaDataService } from '../../meta-data.service';
 import { take } from 'rxjs/operators';
 import { SaveDataLocallyModalComponent } from '../../save-data-locally-modal/save-data-locally-modal.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -57,7 +56,6 @@ export class OmnAIScopeDataService implements DataSource {
     this.setupDevicePolling();
   }
   private socket: WebSocket | null = null;
-  private MetaDataService = inject(MetaDataService);
 
 
   readonly isConnected = signal<boolean>(false);
