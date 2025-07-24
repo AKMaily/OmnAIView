@@ -210,22 +210,6 @@ export class OmnAIScopeDataService implements DataSource {
     }
   }
 
-  // stop function
-
-  stop(): void {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      // @TODO: right stop message
-      const stopMessage = JSON.stringify({
-        type: `stop`,
-        uuids: this.devices().map(device => device.UUID),
-      });
-      console.log(stopMessage);
-      this.socket.send(stopMessage);
-    } else {
-      console.log('Websocket is not connected.');
-    }
-  }
-
   clearData(): void {
     if (this.socket) {
       this.socket.close();
