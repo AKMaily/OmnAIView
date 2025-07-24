@@ -228,7 +228,8 @@ export class OmnAIScopeDataService implements DataSource {
       const saveMessage = {
         type: `save`,
         uuids: this.devices().map(device => device.UUID),
-        path: `${fileName}`
+        path: `${fileName}`,
+        format: `csv`
       }
       const progressRef = this.dialog.open(DownloadProgressComponent, {
         disableClose: true
