@@ -56,7 +56,7 @@ export class DummyDataService implements DataSource {
         const dialogRef = this.dialog.open(SaveDataLocallyModalComponent, { width: '60vw' });
         dialogRef.afterClosed().subscribe(({dir, fileName}) => {
             if(window.electronAPI) {
-                const csv = ['timestamp,value', ...this._data()['dummy'].map(item => `${item.timestamp},${item.value}`)].join('\n');
+                const csv = ['# source: dummy data','# version: 1.0.0','timestamp,value', ...this._data()['dummy'].map(item => `${item.timestamp},${item.value}`)].join('\n');
                 const progressRef = this.dialog.open(DownloadProgressComponent, {
                     disableClose: true
                 });
