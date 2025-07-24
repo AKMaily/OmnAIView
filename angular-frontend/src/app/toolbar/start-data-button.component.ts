@@ -1,8 +1,8 @@
 
 import { Component, inject } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { DataSourceSelectionService } from './data-source-selection.service';
-import { SourceSelectModalComponent } from './source-select-modal.component';
+import { DataSourceSelectionService } from '../source-selection/data-source-selection.service';
+import { SourceSelectModalComponent } from '../source-selection/source-select-modal.component';
 import { MatIconModule } from '@angular/material/icon';
 import { AdvancedModeService } from '../advanced-mode/advanced-mode.service';
 
@@ -59,5 +59,9 @@ export class StartDataButtonComponent {
     toggleStartButton(): void {
         this.measurementIsStarted ? this.stopMeasurement() : this.openModal();
         this.measurementIsStarted = !this.measurementIsStarted;
+    }
+
+    getMeasurementState(): boolean {
+        return this.measurementIsStarted;
     }
 }
